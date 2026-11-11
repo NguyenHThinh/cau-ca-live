@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import {
   ActiveAnglerState,
+  AudioSettings,
   CatchResult,
   EnvironmentState,
   LeaderboardBundle,
@@ -14,6 +15,7 @@ import { AlertOverlay } from './components/AlertOverlay.js';
 import { LiveGuideBanner } from './components/LiveGuideBanner.js';
 import { HostSimulatorDrawer } from './components/HostSimulatorDrawer.js';
 import { getBackendBaseUrl } from './apiConfig.js';
+import { soundManager } from './utils/soundManager.js';
 
 const STUDIO_BASE_WIDTH = 450;
 const STUDIO_BASE_HEIGHT = 800;
@@ -49,6 +51,13 @@ export const App: React.FC = () => {
   const [heartBursts, setHeartBursts] = useState<Record<string, number>>({});
   const [aspectMode, setAspectMode] = useState<'9:16' | '16:9'>('9:16');
   const [customAnnouncement, setCustomAnnouncement] = useState<string>('');
+  const [audioSettings, setAudioSettings] = useState<AudioSettings>({
+    bgmEnabled: true,
+    sfxEnabled: true,
+    ttsEnabled: true,
+    bgmVolume: 0.35,
+    ttsVolume: 0.9,
+  });
   const [isStudioMode] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
@@ -92,9 +101,16 @@ export const App: React.FC = () => {
       setRecentCatches(payload.recentCatches);
       setEnvironment(payload.environment);
       setTiktokStatus(payload.tiktokStatus);
+      if (payload.audioSettings) {
+        setAudioSettings(payload.audioSettings);
+        soundManager.updateSettings(payload.audioSettings);
+      }
     });
 
     socket.on('anglerUpdated', (updatedAngler) => {
+      if (updatedAngler.status === 'CASTING') {
+        soundManager.playCastSplash();
+      }
       setAnglers((prev) => {
         const exists = prev.some((a) => a.tiktokUid === updatedAngler.tiktokUid);
         const next = exists
@@ -124,6 +140,7 @@ export const App: React.FC = () => {
     });
 
     socket.on('catchCompleted', ({ angler, catchResult, leaderboards: lb }) => {
+      soundManager.playCatchChime(catchResult.rarity);
       setAnglers((prev) => {
         const exists = prev.some((a) => a.tiktokUid === angler.tiktokUid);
         const next = exists
@@ -137,6 +154,9 @@ export const App: React.FC = () => {
 
     socket.on('alertTriggered', (alert) => {
       setActiveAlert(alert);
+      if (alert.speechText) {
+        soundManager.speakAnnouncement(alert.speechText);
+      }
     });
 
     socket.on('leaderboardsUpdated', (lb) => {
@@ -145,6 +165,15 @@ export const App: React.FC = () => {
 
     socket.on('environmentUpdated', (env) => {
       setEnvironment(env);
+    });
+
+    socket.on('audioSettingsUpdated', (nextSettings) => {
+      setAudioSettings(nextSettings);
+      soundManager.updateSettings(nextSettings);
+    });
+
+    socket.on('audioTestTriggered', ({ text }) => {
+      soundManager.speakAnnouncement(text);
     });
 
     return () => {
@@ -216,6 +245,7 @@ export const App: React.FC = () => {
           onToggleAspectMode={setAspectMode}
           customAnnouncement={customAnnouncement}
           onChangeAnnouncement={setCustomAnnouncement}
+          audioSettings={audioSettings}
         />
       )}
     </div>

@@ -48,6 +48,15 @@ const MAX_PENDING_CASTS_PER_USER = 3;
 const ROD_CHECK_COOLDOWN_MS = 8000;
 const IDLE_SEAT_TIMEOUT_MS = 30_000; // Tự động rời chỗ ngồi nếu > 30s không tương tác
 const ANCHOR_DATE_STR = '2026-01-01';
+
+function cleanSpeakName(rawName: string): string {
+  const cleaned = rawName
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) return 'bạn';
+  return cleaned.length > 16 ? cleaned.slice(0, 16).trim() : cleaned;
+}
 const SEASONS_ORDER: SeasonId[] = ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'];
 
 /**
@@ -386,6 +395,7 @@ export class FishingEngine {
 
     if (leveledUp) {
       const rodLv2 = getRodConfigByLevel(player.rodLevel);
+      const speakName = cleanSpeakName(player.nickname);
       angler.lastGiftFloatingText = `💚 Follow ➔ Cần Lv2!`;
       angler.lastGiftAt = Date.now();
       this.callbacks.onAlertTriggered({
@@ -393,6 +403,7 @@ export class FishingEngine {
         type: 'FOLLOW_BONUS',
         title: `💚 CẢM ƠN FOLLOW! MỞ KHÓA ${rodLv2.name.toUpperCase()} LV.2!`,
         subtitle: `${player.nickname} vừa Follow kênh ➔ Nhận ngay ${rodLv2.name} Lv2 vĩnh viễn!`,
+        speechText: `Cảm ơn ${speakName} đã follow, mở Cần Trúc cấp 2!`,
         avatarUrl: player.avatarUrl,
         nickname: player.nickname,
         emoji: '🎍',
@@ -479,6 +490,7 @@ export class FishingEngine {
       const grantedBaitCfg = getBaitConfigByTier(
         isPaidBaitHigherThanDefault ? upgrade.grantedBaitTier : player.baitTier
       );
+      const speakName = cleanSpeakName(player.nickname);
 
       this.callbacks.onAlertTriggered({
         id: `alert_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
@@ -489,6 +501,9 @@ export class FishingEngine {
           ? `🔥 SẮP LÊN CẤP! +${totalDiamonds} KC (${remainText.toUpperCase()})`
           : `🎁 +${totalDiamonds} KC TÍCH LŨY CẦN & MỒI ${upgrade.grantedBaitName.toUpperCase()}!`,
         subtitle: `${player.nickname} tặng ${giftEmoji} (+${totalDiamonds} KC) ➔ ${baitNotice}`,
+        speechText: leveledUp
+          ? `Chúc mừng ${speakName} lên ${rodConfig.name} cấp ${player.rodLevel}!`
+          : `Cảm ơn ${speakName} tặng ${totalDiamonds} kim cương!`,
         avatarUrl: player.avatarUrl,
         nickname: player.nickname,
         emoji: leveledUp ? '⚡' : giftEmoji,
@@ -694,6 +709,8 @@ export class FishingEngine {
         catchResult.isGlobalRecord
       ) {
         const tierLabel = RARITY_META[catchResult.rarity].label.toUpperCase();
+        const speakName = cleanSpeakName(angler.nickname);
+        const speakKg = String(catchResult.weight).replace('.', ' phẩy ');
         this.callbacks.onAlertTriggered({
           id: `catch_alert_${catchResult.id}`,
           type: catchResult.isGlobalRecord ? 'RECORD_BREAKER' : 'RARE_CATCH',
@@ -701,6 +718,9 @@ export class FishingEngine {
             ? `👑 PHÁ KỶ LỤC HỒ CÂU: ${catchResult.weight} KG!`
             : `🔥 CÂU TRÚNG CÁ ${tierLabel}: ${catchResult.fishName.toUpperCase()}!`,
           subtitle: `${angler.nickname} (Cần Lv${rodLevelUsed}) vừa kéo lên ${catchResult.fishName} nặng ${catchResult.weight} kg!`,
+          speechText: catchResult.isGlobalRecord
+            ? `Kỷ lục mới! ${speakName} câu được ${catchResult.fishName} ${speakKg} ký!`
+            : `Quá đỉnh! ${speakName} câu trúng ${catchResult.fishName} ${speakKg} ký!`,
           avatarUrl: angler.avatarUrl,
           nickname: angler.nickname,
           emoji: catchResult.fishEmoji,

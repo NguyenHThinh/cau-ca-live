@@ -518,8 +518,8 @@ export const FishingScene2D: React.FC<FishingScene2DProps> = ({
         <div className="absolute inset-0 bg-indigo-950/30 pointer-events-none transition-opacity duration-700" />
       )}
 
-      {/* Subtle Animated Water Shimmer over the Oval Pond Center */}
-      <div className="absolute left-[22%] right-[22%] top-[20%] bottom-[22%] rounded-full pointer-events-none overflow-hidden">
+      {/* Subtle Animated Water Shimmer + Living Underwater Fish & Glowing Boss Shadows */}
+      <div className="absolute left-[22%] right-[22%] top-[20%] bottom-[22%] rounded-full pointer-events-none overflow-hidden z-10">
         <div
           className="w-full h-full animate-sparkle"
           style={{
@@ -528,6 +528,7 @@ export const FishingScene2D: React.FC<FishingScene2DProps> = ({
               : 'radial-gradient(ellipse 65% 50% at 50% 42%, rgba(165, 243, 252, 0.22) 0%, transparent 70%)',
           }}
         />
+        <UnderwaterFishLayer isNight={isNight} />
       </div>
 
       {/* 2. PRECISION FISHING LINES (Connected 100% to each user's exact Rod Tip!) */}
@@ -971,6 +972,15 @@ interface AnglerHudOverlayProps {
   heartBurstTick: number;
 }
 
+const WAITING_EMOTES = [
+  '🎵 Chill~',
+  '👀 Cá to kìa!',
+  '🍀 Lên cá khủng!',
+  '🐟 Đớp mồi đi!',
+  '✨ Sắp cắn câu!',
+  '🔥 Giật cần!',
+];
+
 const AnglerHudOverlay: React.FC<AnglerHudOverlayProps> = ({
   angler,
   spot,
@@ -979,6 +989,7 @@ const AnglerHudOverlay: React.FC<AnglerHudOverlayProps> = ({
 }) => {
   const [showHeartPop, setShowHeartPop] = useState(false);
   const [showGiftFloating, setShowGiftFloating] = useState(false);
+  const [waitingEmote, setWaitingEmote] = useState<string | null>(null);
 
   useEffect(() => {
     if (heartBurstTick > 0) {
@@ -995,6 +1006,38 @@ const AnglerHudOverlay: React.FC<AnglerHudOverlayProps> = ({
       return () => clearTimeout(timer);
     }
   }, [angler.lastGiftAt, angler.lastGiftFloatingText]);
+
+  useEffect(() => {
+    if (angler.status !== 'WAITING_BITE') {
+      setWaitingEmote(null);
+      return;
+    }
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
+    const initialDelay = 1600 + (angler.slotIndex % 5) * 750;
+    const startTimer = setTimeout(() => {
+      const pick =
+        WAITING_EMOTES[
+          (angler.slotIndex + Math.floor(Date.now() / 3000)) %
+            WAITING_EMOTES.length
+        ];
+      setWaitingEmote(pick);
+      hideTimer = setTimeout(() => setWaitingEmote(null), 2200);
+    }, initialDelay);
+
+    const loopTimer = setInterval(() => {
+      const pick =
+        WAITING_EMOTES[Math.floor(Math.random() * WAITING_EMOTES.length)];
+      setWaitingEmote(pick);
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => setWaitingEmote(null), 2200);
+    }, 5600);
+
+    return () => {
+      clearTimeout(startTimer);
+      clearInterval(loopTimer);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
+  }, [angler.status, angler.slotIndex]);
 
   const rodConfig = getRodConfigByLevel(angler.rodLevel);
   const baitConfig = getBaitConfigByTier(angler.baitTier);
@@ -1046,6 +1089,15 @@ const AnglerHudOverlay: React.FC<AnglerHudOverlayProps> = ({
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
             <span>+1</span>
+          </div>
+        )}
+
+        {/* Cute Waiting-for-Bite Emote Bubble */}
+        {waitingEmote && !showGiftFloating && !showHeartPop && (
+          <div
+            className={`absolute bottom-full mb-0.5 z-40 px-1.5 py-[1px] rounded-full bg-slate-900/85 border border-cyan-300/60 text-cyan-100 font-display font-bold text-[8px] whitespace-nowrap shadow animate-pulse ${floatingAlignClass}`}
+          >
+            {waitingEmote}
           </div>
         )}
 
@@ -1176,5 +1228,190 @@ const VectorFishIcon: React.FC<{ rarity: FishRarity; className?: string }> = ({
       <circle cx="33" cy="11.5" r="2" fill="#ffffff" />
       <circle cx="33.6" cy="11.5" r="1" fill="#0f172a" />
     </svg>
+  );
+};
+
+interface UnderwaterSwimmerConfig {
+  id: string;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  durationSec: number;
+  delaySec: number;
+  scale: number;
+  isBoss?: boolean;
+  color: string;
+  glowColor?: string;
+}
+
+const UNDERWATER_SWIMMERS: UnderwaterSwimmerConfig[] = [
+  {
+    id: 'boss_golden_koi',
+    startX: 14,
+    startY: 36,
+    endX: 84,
+    endY: 54,
+    durationSec: 16,
+    delaySec: 0,
+    scale: 1.45,
+    isBoss: true,
+    color: 'rgba(251, 191, 36, 0.52)',
+    glowColor: 'rgba(253, 224, 71, 0.55)',
+  },
+  {
+    id: 'boss_shadow_dragon',
+    startX: 86,
+    startY: 64,
+    endX: 16,
+    endY: 42,
+    durationSec: 21,
+    delaySec: 4,
+    scale: 1.65,
+    isBoss: true,
+    color: 'rgba(192, 132, 252, 0.45)',
+    glowColor: 'rgba(216, 180, 254, 0.5)',
+  },
+  {
+    id: 'fish_sub_1',
+    startX: 18,
+    startY: 25,
+    endX: 78,
+    endY: 32,
+    durationSec: 12,
+    delaySec: 1,
+    scale: 0.85,
+    color: 'rgba(15, 23, 42, 0.34)',
+  },
+  {
+    id: 'fish_sub_2',
+    startX: 82,
+    startY: 48,
+    endX: 20,
+    endY: 58,
+    durationSec: 14,
+    delaySec: 2.5,
+    scale: 0.95,
+    color: 'rgba(15, 23, 42, 0.38)',
+  },
+  {
+    id: 'fish_sub_3',
+    startX: 24,
+    startY: 72,
+    endX: 76,
+    endY: 65,
+    durationSec: 13,
+    delaySec: 5,
+    scale: 0.8,
+    color: 'rgba(15, 23, 42, 0.32)',
+  },
+  {
+    id: 'fish_sub_4',
+    startX: 74,
+    startY: 28,
+    endX: 26,
+    endY: 38,
+    durationSec: 15,
+    delaySec: 3.2,
+    scale: 0.9,
+    color: 'rgba(56, 189, 248, 0.38)',
+  },
+  {
+    id: 'fish_sub_5',
+    startX: 30,
+    startY: 52,
+    endX: 72,
+    endY: 35,
+    durationSec: 11,
+    delaySec: 6.5,
+    scale: 0.75,
+    color: 'rgba(251, 113, 133, 0.38)',
+  },
+];
+
+const UnderwaterFishLayer: React.FC<{ isNight: boolean }> = ({ isNight }) => {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <style>{`
+        @keyframes swimAcrossRight {
+          0% { transform: translate(0%, 0%) scaleX(1) rotate(4deg); opacity: 0; }
+          15% { opacity: 0.85; }
+          50% { transform: translate(140px, 14px) scaleX(1) rotate(-3deg); opacity: 0.95; }
+          85% { opacity: 0.85; }
+          100% { transform: translate(260px, -6px) scaleX(1) rotate(4deg); opacity: 0; }
+        }
+        @keyframes swimAcrossLeft {
+          0% { transform: translate(0%, 0%) scaleX(-1) rotate(-4deg); opacity: 0; }
+          15% { opacity: 0.85; }
+          50% { transform: translate(-140px, -12px) scaleX(-1) rotate(3deg); opacity: 0.95; }
+          85% { opacity: 0.85; }
+          100% { transform: translate(-260px, 8px) scaleX(-1) rotate(-4deg); opacity: 0; }
+        }
+      `}</style>
+      {UNDERWATER_SWIMMERS.map((swimmer) => {
+        const goingRight = swimmer.endX >= swimmer.startX;
+        const animName = goingRight ? 'swimAcrossRight' : 'swimAcrossLeft';
+        return (
+          <div
+            key={swimmer.id}
+            style={{
+              left: `${swimmer.startX}%`,
+              top: `${swimmer.startY}%`,
+              animation: `${animName} ${swimmer.durationSec}s ease-in-out ${swimmer.delaySec}s infinite`,
+              filter:
+                swimmer.isBoss && swimmer.glowColor
+                  ? `drop-shadow(0 0 ${isNight ? '8px' : '5px'} ${swimmer.glowColor})`
+                  : 'blur(0.4px)',
+            }}
+            className="absolute"
+          >
+            <svg
+              width={Math.round(28 * swimmer.scale)}
+              height={Math.round(14 * swimmer.scale)}
+              viewBox="0 0 36 18"
+            >
+              {/* Tail fin */}
+              <polygon
+                points="7,9 0,2 2,9 0,16"
+                fill={swimmer.color}
+              />
+              {/* Side pectoral fins */}
+              <ellipse
+                cx="20"
+                cy="4"
+                rx="4"
+                ry="2"
+                transform="rotate(-25 20 4)"
+                fill={swimmer.color}
+              />
+              <ellipse
+                cx="20"
+                cy="14"
+                rx="4"
+                ry="2"
+                transform="rotate(25 20 14)"
+                fill={swimmer.color}
+              />
+              {/* Streamlined fish body silhouette */}
+              <ellipse
+                cx="21"
+                cy="9"
+                rx="13"
+                ry="5"
+                fill={swimmer.color}
+              />
+              {swimmer.isBoss && (
+                <circle
+                  cx="29"
+                  cy="7.5"
+                  r="1.3"
+                  fill="rgba(255, 255, 255, 0.85)"
+                />
+              )}
+            </svg>
+          </div>
+        );
+      })}
+    </div>
   );
 };

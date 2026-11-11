@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { DayPhase, EnvironmentState, SeasonId } from '../../shared/types.js';
+import {
+  AudioSettings,
+  DayPhase,
+  EnvironmentState,
+  SeasonId,
+} from '../../shared/types.js';
 import {
   GIFT_PRESETS,
   getBaitConfigByTier,
@@ -7,6 +12,7 @@ import {
   SEASON_META,
 } from '../../shared/gameConfig.js';
 import { getBackendBaseUrl } from '../apiConfig.js';
+import { soundManager } from '../utils/soundManager.js';
 import {
   Radio,
   Heart,
@@ -21,6 +27,9 @@ import {
   MessageSquare,
   Sun,
   Moon,
+  Volume2,
+  VolumeX,
+  Music,
 } from 'lucide-react';
 
 interface HostSimulatorDrawerProps {
@@ -35,6 +44,7 @@ interface HostSimulatorDrawerProps {
   onToggleAspectMode: (mode: '9:16' | '16:9') => void;
   customAnnouncement: string;
   onChangeAnnouncement: (text: string) => void;
+  audioSettings: AudioSettings;
 }
 
 const DEMO_VIEWERS = [
@@ -63,6 +73,7 @@ export const HostSimulatorDrawer: React.FC<HostSimulatorDrawerProps> = ({
   onToggleAspectMode,
   customAnnouncement,
   onChangeAnnouncement,
+  audioSettings,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [usernameInput, setUsernameInput] = useState(
@@ -123,6 +134,27 @@ export const HostSimulatorDrawer: React.FC<HostSimulatorDrawerProps> = ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+  };
+
+  const updateAudioSettings = async (patch: Partial<AudioSettings>) => {
+    const merged: AudioSettings = { ...audioSettings, ...patch };
+    soundManager.updateSettings(merged);
+    await fetch(`${API_BASE}/api/audio-settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+  };
+
+  const triggerTestVoice = async () => {
+    await fetch(`${API_BASE}/api/audio-test`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: 'Chào mừng các cần thủ đến với hồ câu! Thả tim hoặc bình luận câu để quăng cần nhé!',
+      }),
+    });
+    showToast('🔊 Đang phát giọng đọc thông báo mẫu!');
   };
 
   const triggerLike = async () => {
@@ -280,6 +312,73 @@ export const HostSimulatorDrawer: React.FC<HostSimulatorDrawerProps> = ({
             >
               <Monitor className="w-3.5 h-3.5" />
               <span>Ngang 16:9 (Full)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 1C. Live Audio, Chill BGM & Vietnamese Voice TTS Controls */}
+        <div className="bg-slate-900/90 border border-indigo-500/35 rounded-xl p-2.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-indigo-300 flex items-center gap-1">
+              <Volume2 className="w-3.5 h-3.5" />
+              🎵 Âm Thanh Live & Đọc Thông Báo (TTS):
+            </span>
+            <button
+              type="button"
+              onClick={triggerTestVoice}
+              className="px-2 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold cursor-pointer shadow"
+            >
+              🔊 Nghe thử
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+            <button
+              type="button"
+              onClick={() =>
+                updateAudioSettings({ bgmEnabled: !audioSettings.bgmEnabled })
+              }
+              className={`py-1.5 px-2 rounded-lg font-bold border flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                audioSettings.bgmEnabled
+                  ? 'bg-emerald-950/90 border-emerald-400 text-emerald-200'
+                  : 'bg-slate-950 border-slate-800 text-slate-500'
+              }`}
+            >
+              <Music className="w-3 h-3" />
+              <span>Nhạc: {audioSettings.bgmEnabled ? 'BẬT' : 'TẮT'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                updateAudioSettings({ ttsEnabled: !audioSettings.ttsEnabled })
+              }
+              className={`py-1.5 px-2 rounded-lg font-bold border flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                audioSettings.ttsEnabled
+                  ? 'bg-amber-950/90 border-amber-400 text-amber-200'
+                  : 'bg-slate-950 border-slate-800 text-slate-500'
+              }`}
+            >
+              {audioSettings.ttsEnabled ? (
+                <Volume2 className="w-3 h-3" />
+              ) : (
+                <VolumeX className="w-3 h-3" />
+              )}
+              <span>Đọc: {audioSettings.ttsEnabled ? 'BẬT' : 'TẮT'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                updateAudioSettings({ sfxEnabled: !audioSettings.sfxEnabled })
+              }
+              className={`py-1.5 px-2 rounded-lg font-bold border flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                audioSettings.sfxEnabled
+                  ? 'bg-cyan-950/90 border-cyan-400 text-cyan-200'
+                  : 'bg-slate-950 border-slate-800 text-slate-500'
+              }`}
+            >
+              <span>SFX: {audioSettings.sfxEnabled ? 'BẬT' : 'TẮT'}</span>
             </button>
           </div>
         </div>

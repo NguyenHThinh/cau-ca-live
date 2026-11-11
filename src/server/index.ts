@@ -7,7 +7,12 @@ import { Server as SocketIOServer } from 'socket.io';
 import { GameDatabase } from './db.js';
 import { FishingEngine } from './fishingEngine.js';
 import { TikTokLiveService } from './tiktokService.js';
-import { DayPhase, SeasonId, ServerToClientEvents } from '../shared/types.js';
+import {
+  AudioSettings,
+  DayPhase,
+  SeasonId,
+  ServerToClientEvents,
+} from '../shared/types.js';
 import { GIFT_PRESETS, ROD_TIERS } from '../shared/gameConfig.js';
 
 const PORT = Number(process.env.PORT || 5050);
@@ -154,6 +159,14 @@ const tiktokService = new TikTokLiveService(engine, () => {
   broadcastFullSync();
 });
 
+let audioSettings: AudioSettings = {
+  bgmEnabled: true,
+  sfxEnabled: true,
+  ttsEnabled: true,
+  bgmVolume: 0.35,
+  ttsVolume: 0.9,
+};
+
 function broadcastFullSync() {
   io.emit('stateSync', {
     anglers: engine.getActiveAnglers(),
@@ -161,6 +174,7 @@ function broadcastFullSync() {
     recentCatches: db.getRecentCatches(10),
     environment: engine.getEnvironment(),
     tiktokStatus: tiktokService.getStatus(),
+    audioSettings,
   });
 }
 
@@ -176,6 +190,7 @@ io.on('connection', (socket) => {
     recentCatches: db.getRecentCatches(10),
     environment: engine.getEnvironment(),
     tiktokStatus: tiktokService.getStatus(),
+    audioSettings,
   });
 });
 
@@ -188,7 +203,67 @@ app.get('/api/state', (_req, res) => {
     recentCatches: db.getRecentCatches(10),
     environment: engine.getEnvironment(),
     tiktokStatus: tiktokService.getStatus(),
+    audioSettings,
   });
+});
+
+app.post('/api/audio-settings', (req, res) => {
+  const patch = req.body as Partial<AudioSettings>;
+  audioSettings = {
+    bgmEnabled: patch.bgmEnabled ?? audioSettings.bgmEnabled,
+    sfxEnabled: patch.sfxEnabled ?? audioSettings.sfxEnabled,
+    ttsEnabled: patch.ttsEnabled ?? audioSettings.ttsEnabled,
+    bgmVolume:
+      typeof patch.bgmVolume === 'number'
+        ? Math.max(0, Math.min(1, patch.bgmVolume))
+        : audioSettings.bgmVolume,
+    ttsVolume:
+      typeof patch.ttsVolume === 'number'
+        ? Math.max(0, Math.min(1, patch.ttsVolume))
+        : audioSettings.ttsVolume,
+  };
+  io.emit('audioSettingsUpdated', audioSettings);
+  res.json({ ok: true, audioSettings });
+});
+
+app.post('/api/audio-test', (req, res) => {
+  const { text } = req.body as { text?: string };
+  const sampleText =
+    (text || '').trim() ||
+    'Chào mừng các cần thủ đến với hồ câu trực tiếp! Thả tim hoặc bình luận câu để quăng cần nhé!';
+  io.emit('audioTestTriggered', { text: sampleText });
+  res.json({ ok: true, text: sampleText });
+});
+
+// Proxy Vietnamese TTS Audio stream so Browser/TikTok Studio plays crystal-clear Vietnamese voice without CORS issues
+app.get('/api/tts', async (req, res) => {
+  const rawText = String(req.query.text || '').trim().slice(0, 180);
+  if (!rawText) {
+    res.status(400).json({ ok: false, error: 'Missing text' });
+    return;
+  }
+  try {
+    const ttsUrl = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(
+      rawText
+    )}&tl=vi&client=tw-ob`;
+    const upstream = await fetch(ttsUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      },
+    });
+    if (!upstream.ok) {
+      res.status(upstream.status).end();
+      return;
+    }
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(buf);
+  } catch (err) {
+    console.error('[TTS Proxy Error]:', err);
+    res.status(500).end();
+  }
 });
 
 app.post('/api/environment', (req, res) => {

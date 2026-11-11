@@ -214,6 +214,14 @@ export interface LeaderboardBundle {
   }>;
 }
 
+export interface AudioSettings {
+  bgmEnabled: boolean;
+  sfxEnabled: boolean;
+  ttsEnabled: boolean;
+  bgmVolume: number; // 0..1
+  ttsVolume: number; // 0..1
+}
+
 export interface LiveEventAlert {
   id: string;
   type:
@@ -225,6 +233,7 @@ export interface LiveEventAlert {
     | 'SYSTEM';
   title: string;
   subtitle: string;
+  speechText?: string;
   avatarUrl?: string;
   nickname?: string;
   emoji: string;
@@ -245,6 +254,7 @@ export interface ServerToClientEvents {
       roomId?: string;
       error?: string;
     };
+    audioSettings?: AudioSettings;
   }) => void;
   anglerUpdated: (angler: ActiveAnglerState) => void;
   anglerLeft: (payload: { tiktokUid: string }) => void;
@@ -263,4 +273,6 @@ export interface ServerToClientEvents {
   alertTriggered: (alert: LiveEventAlert) => void;
   leaderboardsUpdated: (leaderboards: LeaderboardBundle) => void;
   environmentUpdated: (env: EnvironmentState) => void;
+  audioSettingsUpdated: (settings: AudioSettings) => void;
+  audioTestTriggered: (payload: { text: string }) => void;
 }
