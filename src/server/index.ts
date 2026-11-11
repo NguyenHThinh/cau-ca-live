@@ -12,34 +12,113 @@ import { GIFT_PRESETS, ROD_TIERS } from '../shared/gameConfig.js';
 
 const PORT = Number(process.env.PORT || 5050);
 
+const ALLOWED_ORIGINS: Array<string | RegExp> = [
+  'https://cau-ca-live.vercel.app',
+  /^https:\/\/cau-ca-live(-[a-z0-9-]+)?\.vercel\.app$/i,
+  /^https:\/\/.*\.vercel\.app$/i,
+  /^http:\/\/(localhost|127\.0\.0\.1|lvh\.me|127\.0\.0\.1\.nip\.io)(:\d+)?$/i,
+];
+
+function isAllowedOrigin(origin?: string): boolean {
+  if (!origin) return true;
+  return ALLOWED_ORIGINS.some((rule) =>
+    typeof rule === 'string' ? rule === origin : rule.test(origin)
+  );
+}
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, origin || true);
+    } else {
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
+
 const app = express();
-// Allow Chromium Private Network Access (https://*.vercel.app -> http://localhost:5050)
+// Allow Chromium Private Network Access (https://cau-ca-live.vercel.app -> http://localhost:5050)
 app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && isAllowedOrigin(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Private-Network', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, X-Requested-With'
+  );
   if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(204).end();
+    return;
   }
   next();
 });
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const httpServer = http.createServer(app);
+
+// Intercept all HTTP requests (including Socket.IO OPTIONS preflights) before engine.io runs
+// so Chrome Private Network Access (https://cau-ca-live.vercel.app -> http://localhost:5050) always succeeds
+const origEmit = httpServer.emit.bind(httpServer);
+httpServer.emit = ((event: string, ...args: unknown[]) => {
+  if (event === 'request') {
+    const req = args[0] as http.IncomingMessage;
+    const res = args[1] as http.ServerResponse;
+    const origin = req.headers.origin;
+    if (origin && isAllowedOrigin(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    }
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    res.setHeader(
+      'Access-Control-Allow-Methods',
+      'GET,POST,PUT,DELETE,OPTIONS'
+    );
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      String(
+        req.headers['access-control-request-headers'] ||
+          'Content-Type, Authorization, X-Requested-With'
+      )
+    );
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return true;
+    }
+  }
+  return origEmit(event, ...args);
+}) as typeof httpServer.emit;
+
 const io = new SocketIOServer<Record<string, never>, ServerToClientEvents>(
   httpServer,
   {
-    cors: {
-      origin: '*',
-    },
-    allowRequest: (req, callback) => {
-      // Ensure Socket.IO polling/upgrade responses include Private Network Access header
+    cors: corsOptions,
+    allowRequest: (_req, callback) => {
       callback(null, true);
     },
   }
 );
-io.engine.on('headers', (headers) => {
+io.engine.on('headers', (headers, req) => {
+  const origin = req.headers.origin;
+  if (origin && isAllowedOrigin(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+    headers['Vary'] = 'Origin';
+  }
+  headers['Access-Control-Allow-Credentials'] = 'true';
   headers['Access-Control-Allow-Private-Network'] = 'true';
 });
 
