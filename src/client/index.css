@@ -1,0 +1,248 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Be Vietnam Pro', 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Be Vietnam Pro', 'Nunito', sans-serif;
+    letter-spacing: -0.015em;
+  }
+
+  .stream-text-shadow {
+    text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.92);
+  }
+
+  /* High-definition Crisp Image Rendering + SVG Unsharp Mask Filter */
+  .crisp-pond-bg {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality;
+    filter: url('#hdSharpen') contrast(1.04) saturate(1.06);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Tactile Claymorphism / Game HUD Cards — High Contrast for Mobile Stream */
+  .game-hud-card {
+    background: rgba(9, 20, 26, 0.88);
+    border: 1.5px solid rgba(255, 255, 255, 0.22);
+    box-shadow:
+      0 8px 22px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+  }
+
+  /* 10-Level Progressive Nameplate Styles (Lv1 -> Lv10) */
+  .nameplate-lv1 {
+    background: rgba(11, 24, 31, 0.94);
+    color: #f8fafc;
+    border: 1.5px solid rgba(148, 163, 184, 0.55);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.65);
+  }
+
+  .nameplate-lv2 {
+    background: linear-gradient(180deg, rgba(6, 78, 59, 0.95) 0%, rgba(2, 44, 34, 0.96) 100%);
+    color: #ecfdf5;
+    border: 1.5px solid #34d399;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.65), 0 0 6px rgba(52, 211, 153, 0.28);
+  }
+
+  .nameplate-lv3 {
+    background: linear-gradient(180deg, rgba(69, 39, 19, 0.95) 0%, rgba(28, 16, 8, 0.96) 100%);
+    color: #fef3c7;
+    border: 1.5px solid #f59e0b;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.65), 0 0 6px rgba(245, 158, 11, 0.28);
+  }
+
+  .nameplate-lv4 {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.96) 100%);
+    color: #e0f2fe;
+    border: 1.5px solid #60a5fa;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.7), 0 0 8px rgba(96, 165, 250, 0.35);
+  }
+
+  .nameplate-lv5 {
+    background: linear-gradient(180deg, #451a03 0%, #1c0a00 100%);
+    color: #fde68a;
+    border: 1.6px solid #fb923c;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+    box-shadow:
+      0 4px 10px rgba(0, 0, 0, 0.72),
+      0 0 9px rgba(251, 146, 60, 0.45),
+      inset 0 1px 0 rgba(254, 215, 170, 0.3);
+  }
+
+  .nameplate-lv6 {
+    background: linear-gradient(180deg, #164e63 0%, #082f49 100%);
+    color: #ecfeff;
+    border: 1.6px solid #67e8f9;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+    box-shadow:
+      0 4px 11px rgba(0, 0, 0, 0.72),
+      0 0 10px rgba(34, 211, 238, 0.5),
+      inset 0 1px 0 rgba(207, 250, 254, 0.35);
+  }
+
+  .nameplate-lv7 {
+    background: linear-gradient(180deg, #422006 0%, #1c0d02 100%);
+    color: #fef08a;
+    border: 1.8px solid #facc15;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.75),
+      0 0 12px rgba(250, 204, 21, 0.58),
+      inset 0 1px 0 rgba(254, 240, 138, 0.45);
+  }
+
+  .nameplate-lv8 {
+    background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 55%, #164e63 100%);
+    color: #e0e7ff;
+    border: 1.8px solid #38bdf8;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.78),
+      0 0 13px rgba(56, 189, 248, 0.65),
+      inset 0 1px 0 rgba(186, 230, 253, 0.45);
+  }
+
+  .nameplate-lv9 {
+    background: linear-gradient(135deg, #4a044e 0%, #2e1065 55%, #1e1b4b 100%);
+    color: #fae8ff;
+    border: 1.8px solid #e879f9;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+    box-shadow:
+      0 4px 14px rgba(0, 0, 0, 0.8),
+      0 0 15px rgba(217, 70, 239, 0.7),
+      inset 0 1px 0 rgba(245, 208, 254, 0.5);
+  }
+
+  .nameplate-lv10 {
+    background: linear-gradient(135deg, #4c0519 0%, #3b0764 50%, #451a03 100%);
+    color: #fef08a;
+    border: 2px solid #fb7185;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.98);
+    box-shadow:
+      0 4px 15px rgba(0, 0, 0, 0.85),
+      0 0 16px rgba(244, 63, 94, 0.78),
+      0 0 6px rgba(250, 204, 21, 0.65),
+      inset 0 1px 0 rgba(254, 240, 138, 0.6);
+  }
+
+  .back-stat-pill {
+    background: rgba(9, 18, 26, 0.92);
+    border: 1.2px solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.65);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+  }
+
+  /* Catch Pill Badge ("Cá chép • 3.2 kg") */
+  .catch-pill-green {
+    background: linear-gradient(180deg, #a7f3d0 0%, #34d399 100%);
+    color: #022c22;
+    border: 2px solid #ffffff;
+    box-shadow:
+      0 5px 14px rgba(0, 0, 0, 0.6),
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .catch-pill-gold {
+    background: linear-gradient(180deg, #fef08a 0%, #facc15 100%);
+    color: #291502;
+    border: 2px solid #ffffff;
+    box-shadow:
+      0 5px 16px rgba(234, 179, 8, 0.65),
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.85);
+  }
+}
+
+@keyframes heartRise {
+  0% {
+    transform: translateY(0) scale(0.75);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-38px) scale(1.25);
+    opacity: 0;
+  }
+}
+
+@keyframes wingFlap {
+  0%,
+  100% {
+    transform: scaleX(1) rotate(0deg);
+  }
+  50% {
+    transform: scaleX(0.86) rotate(5deg);
+  }
+}
+
+@keyframes fishPop {
+  0% {
+    transform: translate(-50%, -35%) scale(0.6);
+    opacity: 0;
+  }
+  65% {
+    transform: translate(-50%, -56%) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes ripplePulse {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.78;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.32;
+  }
+}
+
+@keyframes waterSparkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.05);
+  }
+}
+
+.animate-heart-rise {
+  animation: heartRise 0.85s ease-out forwards;
+}
+
+.animate-wing {
+  animation: wingFlap 1.5s ease-in-out infinite;
+}
+
+.animate-fish-pop {
+  animation: fishPop 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-ripple {
+  animation: ripplePulse 2.2s ease-in-out infinite;
+}
+
+.animate-sparkle {
+  animation: waterSparkle 3.5s ease-in-out infinite;
+}

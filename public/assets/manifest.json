@@ -1,0 +1,306 @@
+[
+ {
+  "file": "baits/bait-1-giun-dat.png",
+  "name": "Giun đất",
+  "type": "baits",
+  "tier": null,
+  "width": 74,
+  "height": 44
+ },
+ {
+  "file": "baits/bait-2-de-men.png",
+  "name": "Dế mèn",
+  "type": "baits",
+  "tier": null,
+  "width": 82,
+  "height": 36
+ },
+ {
+  "file": "baits/bait-3-tom-tuoi.png",
+  "name": "Tôm tươi",
+  "type": "baits",
+  "tier": null,
+  "width": 82,
+  "height": 67
+ },
+ {
+  "file": "baits/bait-4-ca-con.png",
+  "name": "Cá con",
+  "type": "baits",
+  "tier": null,
+  "width": 78,
+  "height": 29
+ },
+ {
+  "file": "baits/bait-5-moi-thom.png",
+  "name": "Mồi thơm",
+  "type": "baits",
+  "tier": null,
+  "width": 64,
+  "height": 60
+ },
+ {
+  "file": "baits/bait-6-moi-vang.png",
+  "name": "Mồi vàng",
+  "type": "baits",
+  "tier": null,
+  "width": 90,
+  "height": 86
+ },
+ {
+  "file": "rods/rod-01-can-tre.png",
+  "name": "Cần Lv1 – Cần tre",
+  "type": "rods",
+  "tier": null,
+  "width": 20,
+  "height": 746
+ },
+ {
+  "file": "rods/rod-02-can-truc-den.png",
+  "name": "Cần Lv2 – Cần trúc đen",
+  "type": "rods",
+  "tier": null,
+  "width": 20,
+  "height": 746
+ },
+ {
+  "file": "rods/rod-03-can-composite.png",
+  "name": "Cần Lv3 – Cần composite",
+  "type": "rods",
+  "tier": null,
+  "width": 53,
+  "height": 746
+ },
+ {
+  "file": "rods/rod-04-can-soi-thuy-tinh.png",
+  "name": "Cần Lv4 – Cần sợi thủy tinh",
+  "type": "rods",
+  "tier": null,
+  "width": 33,
+  "height": 747
+ },
+ {
+  "file": "rods/rod-05-can-carbon.png",
+  "name": "Cần Lv5 – Cần carbon",
+  "type": "rods",
+  "tier": null,
+  "width": 22,
+  "height": 747
+ },
+ {
+  "file": "rods/rod-06-can-carbon-pro.png",
+  "name": "Cần Lv6 – Cần carbon Pro",
+  "type": "rods",
+  "tier": null,
+  "width": 26,
+  "height": 747
+ },
+ {
+  "file": "rods/rod-07-can-titan.png",
+  "name": "Cần Lv7 – Cần titan",
+  "type": "rods",
+  "tier": null,
+  "width": 28,
+  "height": 747
+ },
+ {
+  "file": "rods/rod-08-can-hop-kim-bac.png",
+  "name": "Cần Lv8 – Cần hợp kim bạc",
+  "type": "rods",
+  "tier": null,
+  "width": 28,
+  "height": 747
+ },
+ {
+  "file": "rods/rod-09-can-vang.png",
+  "name": "Cần Lv9 – Cần vàng",
+  "type": "rods",
+  "tier": null,
+  "width": 46,
+  "height": 747
+ },
+ {
+  "file": "rods/rod-10-can-than-ngu.png",
+  "name": "Cần Lv10 – Cần Thần Ngư",
+  "type": "rods",
+  "tier": null,
+  "width": 81,
+  "height": 773
+ },
+ {
+  "file": "fish/fish-t1-01-ro-dong.png",
+  "name": "Cá rô đồng",
+  "type": "fish",
+  "tier": 1,
+  "width": 107,
+  "height": 64
+ },
+ {
+  "file": "fish/fish-t1-02-diec.png",
+  "name": "Cá diếc",
+  "type": "fish",
+  "tier": 1,
+  "width": 106,
+  "height": 72
+ },
+ {
+  "file": "fish/fish-t1-03-tre-den.png",
+  "name": "Cá trê đen",
+  "type": "fish",
+  "tier": 1,
+  "width": 133,
+  "height": 54
+ },
+ {
+  "file": "fish/fish-t1-04-ro-phi.png",
+  "name": "Cá rô phi",
+  "type": "fish",
+  "tier": 1,
+  "width": 115,
+  "height": 72
+ },
+ {
+  "file": "fish/fish-t2-05-chep.png",
+  "name": "Cá chép",
+  "type": "fish",
+  "tier": 2,
+  "width": 133,
+  "height": 78
+ },
+ {
+  "file": "fish/fish-t2-06-tram-co.png",
+  "name": "Cá trắm cỏ",
+  "type": "fish",
+  "tier": 2,
+  "width": 139,
+  "height": 68
+ },
+ {
+  "file": "fish/fish-t2-07-me-trang.png",
+  "name": "Cá mè trắng",
+  "type": "fish",
+  "tier": 2,
+  "width": 132,
+  "height": 70
+ },
+ {
+  "file": "fish/fish-t2-08-chim-trang.png",
+  "name": "Cá chim trắng",
+  "type": "fish",
+  "tier": 2,
+  "width": 113,
+  "height": 80
+ },
+ {
+  "file": "fish/fish-t3-09-loc-bong.png",
+  "name": "Cá lóc bông",
+  "type": "fish",
+  "tier": 3,
+  "width": 158,
+  "height": 52
+ },
+ {
+  "file": "fish/fish-t3-10-chinh.png",
+  "name": "Cá chình",
+  "type": "fish",
+  "tier": 3,
+  "width": 124,
+  "height": 71
+ },
+ {
+  "file": "fish/fish-t3-11-dieu-hong.png",
+  "name": "Cá diêu hồng",
+  "type": "fish",
+  "tier": 3,
+  "width": 117,
+  "height": 76
+ },
+ {
+  "file": "fish/fish-t3-12-hoi-van.png",
+  "name": "Cá hồi vân",
+  "type": "fish",
+  "tier": 3,
+  "width": 135,
+  "height": 56
+ },
+ {
+  "file": "fish/fish-t4-13-tra-dau.png",
+  "name": "Cá tra dầu",
+  "type": "fish",
+  "tier": 4,
+  "width": 248,
+  "height": 116
+ },
+ {
+  "file": "fish/fish-t4-14-bong-tuong.png",
+  "name": "Cá bống tượng",
+  "type": "fish",
+  "tier": 4,
+  "width": 228,
+  "height": 93
+ },
+ {
+  "file": "fish/fish-t4-15-lang.png",
+  "name": "Cá lăng",
+  "type": "fish",
+  "tier": 4,
+  "width": 211,
+  "height": 87
+ },
+ {
+  "file": "fish/fish-t4-16-koi-hoa.png",
+  "name": "Cá Koi hoa",
+  "type": "fish",
+  "tier": 4,
+  "width": 226,
+  "height": 104
+ },
+ {
+  "file": "fish/fish-t5-17-ho.png",
+  "name": "Cá hô",
+  "type": "fish",
+  "tier": 5,
+  "width": 211,
+  "height": 146
+ },
+ {
+  "file": "fish/fish-t5-18-anh-dao.png",
+  "name": "Cá anh đào",
+  "type": "fish",
+  "tier": 5,
+  "width": 167,
+  "height": 109
+ },
+ {
+  "file": "fish/fish-t5-19-hong-lien.png",
+  "name": "Cá hồng liên",
+  "type": "fish",
+  "tier": 5,
+  "width": 158,
+  "height": 112
+ },
+ {
+  "file": "fish/fish-t5-20-phong-do.png",
+  "name": "Cá phong đỏ",
+  "type": "fish",
+  "tier": 5,
+  "width": 172,
+  "height": 142
+ },
+ {
+  "file": "fish/fish-t5-21-bang-tuyet.png",
+  "name": "Cá băng tuyết",
+  "type": "fish",
+  "tier": 5,
+  "width": 168,
+  "height": 131
+ },
+ {
+  "file": "fish/fish-t5-22-trang-bac.png",
+  "name": "Cá trăng bạc",
+  "type": "fish",
+  "tier": 5,
+  "width": 186,
+  "height": 150
+ }
+]

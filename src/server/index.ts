@@ -1,0 +1,408 @@
+import express from 'express';
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import cors from 'cors';
+import { Server as SocketIOServer } from 'socket.io';
+import { GameDatabase } from './db.js';
+import { FishingEngine } from './fishingEngine.js';
+import { TikTokLiveService } from './tiktokService.js';
+import { DayPhase, SeasonId, ServerToClientEvents } from '../shared/types.js';
+import { GIFT_PRESETS, ROD_TIERS } from '../shared/gameConfig.js';
+
+const PORT = Number(process.env.PORT || 5050);
+
+const app = express();
+// Allow Chromium Private Network Access (https://*.vercel.app -> http://localhost:5050)
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
+  next();
+});
+app.use(cors());
+app.use(express.json());
+
+const httpServer = http.createServer(app);
+const io = new SocketIOServer<Record<string, never>, ServerToClientEvents>(
+  httpServer,
+  {
+    cors: {
+      origin: '*',
+    },
+    allowRequest: (req, callback) => {
+      // Ensure Socket.IO polling/upgrade responses include Private Network Access header
+      callback(null, true);
+    },
+  }
+);
+io.engine.on('headers', (headers) => {
+  headers['Access-Control-Allow-Private-Network'] = 'true';
+});
+
+const db = new GameDatabase();
+// Xóa toàn bộ dữ liệu mẫu/giả lập để Bảng Xếp Hạng (BXH) ban đầu hoàn toàn trống
+db.purgeDemoPlayers();
+
+const engine = new FishingEngine(db, {
+  onAnglerUpdated: (angler) => {
+    io.emit('anglerUpdated', angler);
+  },
+  onAnglerLeft: (payload) => {
+    io.emit('anglerLeft', payload);
+  },
+  onAnglerLiked: (payload) => {
+    io.emit('anglerLiked', payload);
+  },
+  onCatchCompleted: (payload) => {
+    io.emit('catchCompleted', payload);
+  },
+  onAlertTriggered: (alert) => {
+    io.emit('alertTriggered', alert);
+  },
+  onLeaderboardsUpdated: (leaderboards) => {
+    io.emit('leaderboardsUpdated', leaderboards);
+  },
+  onEnvironmentUpdated: (env) => {
+    io.emit('environmentUpdated', env);
+  },
+});
+
+const tiktokService = new TikTokLiveService(engine, () => {
+  broadcastFullSync();
+});
+
+function broadcastFullSync() {
+  io.emit('stateSync', {
+    anglers: engine.getActiveAnglers(),
+    leaderboards: db.getLeaderboards(5),
+    recentCatches: db.getRecentCatches(10),
+    environment: engine.getEnvironment(),
+    tiktokStatus: tiktokService.getStatus(),
+  });
+}
+
+// Periodically sync environment every 60 seconds so Day/Night & Daily Season transition smoothly
+setInterval(() => {
+  io.emit('environmentUpdated', engine.getEnvironment());
+}, 60000);
+
+io.on('connection', (socket) => {
+  socket.emit('stateSync', {
+    anglers: engine.getActiveAnglers(),
+    leaderboards: db.getLeaderboards(5),
+    recentCatches: db.getRecentCatches(10),
+    environment: engine.getEnvironment(),
+    tiktokStatus: tiktokService.getStatus(),
+  });
+});
+
+// --- REST API FOR HOST DASHBOARD & SIMULATOR ---
+
+app.get('/api/state', (_req, res) => {
+  res.json({
+    anglers: engine.getActiveAnglers(),
+    leaderboards: db.getLeaderboards(5),
+    recentCatches: db.getRecentCatches(10),
+    environment: engine.getEnvironment(),
+    tiktokStatus: tiktokService.getStatus(),
+  });
+});
+
+app.post('/api/environment', (req, res) => {
+  const { seasonMode, season, dayPhaseForced } = req.body as {
+    seasonMode?: 'daily' | 'manual';
+    season?: SeasonId;
+    dayPhaseForced?: DayPhase | null;
+  };
+  const env = engine.setEnvironmentConfig({
+    seasonMode,
+    season,
+    dayPhaseForced,
+  });
+  res.json({ ok: true, environment: env });
+});
+
+app.post('/api/tiktok/connect', async (req, res) => {
+  const { username } = req.body as { username?: string };
+  try {
+    const status = await tiktokService.connect(username || '');
+    // Dọn sạch các nhân vật demo/giả lập trên bờ hồ và trên BXH để nhường 100% cho người xem TikTok Live thật
+    engine.clearActiveAnglers();
+    db.purgeDemoPlayers();
+    broadcastFullSync();
+    res.json({ ok: true, status });
+  } catch (err: unknown) {
+    res.status(400).json({
+      ok: false,
+      error: err instanceof Error ? err.message : 'Lỗi kết nối TikTok Live',
+    });
+  }
+});
+
+app.post('/api/leaderboard/reset', (_req, res) => {
+  db.resetLeaderboardStats();
+  broadcastFullSync();
+  res.json({
+    ok: true,
+    message: 'Đã xóa làm mới toàn bộ Bảng Xếp Hạng (vẫn giữ nguyên cấp Cần & Kim Cương của người chơi)!',
+  });
+});
+
+app.post('/api/tiktok/disconnect', (_req, res) => {
+  tiktokService.disconnect();
+  res.json({ ok: true, status: tiktokService.getStatus() });
+});
+
+const VIET_NAMES = [
+  'Hoàng Long', 'Minh Thư', 'bé Na', 'Tuấn Kiệt', 'Cún Con',
+  'Ngọc Anh', 'Đức Phát', 'Lan Chi', 'Tùng', 'Bảo Ngọc',
+  'Gia Huy', 'Khánh Linh', 'Minh Khang', 'Thảo Vy', 'Quốc Bảo',
+  'Hà My', 'Đăng Khoa', 'Phương Anh', 'Hữu Phước', 'Kiều Trang',
+  'Anh Tuấn', 'Mỹ Duyên', 'Thành Đạt', 'Yến Nhi', 'Văn Hậu',
+  'Thanh Trúc', 'Quang Hải', 'Bích Phương', 'Hoàng Nam', 'Kim Ngân',
+  'Trọng Hiếu', 'Tuyết Nhi', 'Minh Quân', 'Hương Giang', 'Bảo Lâm',
+  'Thùy Tiên', 'Đức Phúc', 'Nhã Phương', 'Tuấn Hưng', 'Linh Ka',
+];
+
+const SIM_PLAYERS = [
+  ...ROD_TIERS.map((tier) => ({
+    tiktokUid: `showcase_rod_lv${tier.level}`,
+    uniqueId: `rod_lv_${tier.level}`,
+    nickname: `${tier.name}`,
+    avatarUrl: `https://api.dicebear.com/9.x/adventurer/svg?seed=rod_lv_${tier.level}`,
+  })),
+  ...VIET_NAMES.map((nickname, idx) => {
+    const num = String(idx + 1).padStart(2, '0');
+    const uniqueId = `viewer_${num}`;
+    return {
+      tiktokUid: `sim_${num}`,
+      uniqueId,
+      nickname,
+      avatarUrl: `https://api.dicebear.com/9.x/adventurer/svg?seed=${uniqueId}`,
+    };
+  }),
+];
+
+// 1. Simulate Like
+app.post('/api/simulate/like', (req, res) => {
+  const { tiktokUid, nickname, likeCount } = req.body as {
+    tiktokUid?: string;
+    nickname?: string;
+    likeCount?: number;
+  };
+
+  const preset =
+    SIM_PLAYERS.find((p) => p.tiktokUid === tiktokUid) ||
+    SIM_PLAYERS[Math.floor(Math.random() * SIM_PLAYERS.length)];
+
+  const angler = engine.handleLikeEvent({
+    tiktokUid: tiktokUid || preset.tiktokUid,
+    uniqueId: preset.uniqueId,
+    nickname: nickname || preset.nickname,
+    avatarUrl: preset.avatarUrl,
+    likeCount: likeCount || 1,
+  });
+
+  res.json({ ok: true, angler });
+});
+
+// 1b. Simulate Chat Command "câu" (Cast Fishing Rod via Chat)
+app.post('/api/simulate/cast-chat', (req, res) => {
+  const { tiktokUid } = req.body as { tiktokUid?: string };
+  const target =
+    SIM_PLAYERS.find((p) => p.tiktokUid === tiktokUid) || SIM_PLAYERS[0];
+
+  const angler = engine.handleCastChatCommand({
+    tiktokUid: target.tiktokUid,
+    uniqueId: target.uniqueId,
+    nickname: target.nickname,
+    avatarUrl: target.avatarUrl,
+  });
+
+  res.json({ ok: true, angler });
+});
+
+// 2. Simulate Follow (Unlocks Rod Lv2 Cần trúc immediately!)
+app.post('/api/simulate/follow', (req, res) => {
+  const { tiktokUid } = req.body as { tiktokUid?: string };
+  const target =
+    SIM_PLAYERS.find((p) => p.tiktokUid === tiktokUid) || SIM_PLAYERS[0];
+
+  const result = engine.handleFollowEvent({
+    tiktokUid: target.tiktokUid,
+    uniqueId: target.uniqueId,
+    nickname: target.nickname,
+    avatarUrl: target.avatarUrl,
+  });
+
+  res.json({ ok: true, ...result });
+});
+
+// 3. Simulate Chat Command "cần" (Check Rod Level, KC & Active Bait)
+app.post('/api/simulate/rod-check', (req, res) => {
+  const { tiktokUid } = req.body as { tiktokUid?: string };
+  const target =
+    SIM_PLAYERS.find((p) => p.tiktokUid === tiktokUid) || SIM_PLAYERS[0];
+
+  const result = engine.handleRodCheckCommand({
+    tiktokUid: target.tiktokUid,
+    uniqueId: target.uniqueId,
+    nickname: target.nickname,
+    avatarUrl: target.avatarUrl,
+  });
+
+  res.json({ ok: true, ...result });
+});
+
+// 4. Simulate SPAM LIKES
+app.post('/api/simulate/spam-likes', (req, res) => {
+  const { tiktokUid, bursts = 15 } = req.body as {
+    tiktokUid?: string;
+    bursts?: number;
+  };
+
+  const target =
+    SIM_PLAYERS.find((p) => p.tiktokUid === tiktokUid) || SIM_PLAYERS[0];
+
+  let count = 0;
+  const interval = setInterval(() => {
+    count++;
+    engine.handleLikeEvent({
+      tiktokUid: target.tiktokUid,
+      uniqueId: target.uniqueId,
+      nickname: target.nickname,
+      avatarUrl: target.avatarUrl,
+      likeCount: Math.floor(Math.random() * 10) + 1,
+    });
+    if (count >= bursts) {
+      clearInterval(interval);
+    }
+  }, 120);
+
+  res.json({
+    ok: true,
+    message: `Đang giả lập ${bursts} đợt spam tim liên tiếp từ ${target.nickname} (Kiểm tra chống lỗi & hàng đợi max 3 lượt)`,
+  });
+});
+
+// 5. Simulate Crowd Wave (9 or 40 viewers)
+app.post('/api/simulate/crowd', (req, res) => {
+  const { count = 9 } = (req.body || {}) as { count?: number };
+  const subset = SIM_PLAYERS.slice(0, Math.min(SIM_PLAYERS.length, count));
+
+  subset.forEach((p, idx) => {
+    setTimeout(() => {
+      engine.handleLikeEvent({
+        tiktokUid: p.tiktokUid,
+        uniqueId: p.uniqueId,
+        nickname: p.nickname,
+        avatarUrl: p.avatarUrl,
+        likeCount: 2,
+      });
+    }, idx * 75);
+  });
+
+  res.json({ ok: true, count: subset.length });
+});
+
+// 6. Simulate Gift / Donate Upgrade
+app.post('/api/simulate/gift', (req, res) => {
+  const { tiktokUid, giftId, repeatCount, diamonds } = req.body as {
+    tiktokUid?: string;
+    giftId?: string;
+    repeatCount?: number;
+    diamonds?: number;
+  };
+
+  const target =
+    SIM_PLAYERS.find((p) => p.tiktokUid === tiktokUid) ||
+    SIM_PLAYERS[Math.floor(Math.random() * SIM_PLAYERS.length)];
+
+  const preset =
+    GIFT_PRESETS.find((g) => g.id === giftId) || GIFT_PRESETS[0];
+
+  const result = engine.handleGiftEvent({
+    tiktokUid: target.tiktokUid,
+    uniqueId: target.uniqueId,
+    nickname: target.nickname,
+    avatarUrl: target.avatarUrl,
+    giftId: preset.id,
+    giftName: preset.name,
+    diamonds: diamonds ?? preset.diamonds,
+    repeatCount: repeatCount || 1,
+  });
+
+  res.json({ ok: true, ...result });
+});
+
+// 7. Spawn 10 Anglers at the Bottom of the Map showcasing all 10 Rod Levels (Lv1 -> Lv10)
+function spawnBottom10RodShowcase() {
+  engine.clearActiveAnglers();
+
+  ROD_TIERS.forEach((tier, idx) => {
+    const uid = `showcase_rod_lv${tier.level}`;
+    const uniqueId = `rod_lv_${tier.level}`;
+    const nickname = `${tier.name}`;
+    const avatarUrl = `https://api.dicebear.com/9.x/adventurer/svg?seed=${uniqueId}`;
+
+    // Ensure exact cumulative KC for this rod level in DB
+    const existing = db.getOrCreatePlayer({
+      tiktokUid: uid,
+      uniqueId,
+      nickname,
+      avatarUrl,
+    });
+    const deltaKc = Math.max(0, tier.requiredKc - existing.diamondsKc);
+    if (deltaKc > 0) {
+      db.applyGiftUpgrade({
+        tiktokUid: uid,
+        uniqueId,
+        nickname,
+        avatarUrl,
+        giftId: 'showcase_kc',
+        giftName: `Mở khóa ${tier.name}`,
+        diamonds: deltaKc,
+      });
+    }
+
+    // Spawn into slot idx (0..9 at the bottom of the map!) and queue 3 casts
+    engine.handleLikeEvent({
+      tiktokUid: uid,
+      uniqueId,
+      nickname,
+      avatarUrl,
+      likeCount: 3,
+      isFollower: idx === 1, // Lv2 showcase also has follower flag
+    });
+  });
+
+  broadcastFullSync();
+}
+
+app.post('/api/simulate/rod-showcase', (_req, res) => {
+  spawnBottom10RodShowcase();
+  res.json({
+    ok: true,
+    message: 'Đã xếp 10 Cần Thủ (Lv1 ➔ Lv10) dọc vòng cung đáy hồ!',
+  });
+});
+
+// Serve static production frontend build (dist) if present so both FE & BE run on a single URL
+const distPath = path.resolve(process.cwd(), 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+      return next();
+    }
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
+
+httpServer.listen(PORT, () => {
+  console.log(`🎣 [Fishing Live Server] Running at http://localhost:${PORT} (TikTok Studio Link: http://lvh.me:${PORT}/?studio=1)`);
+});

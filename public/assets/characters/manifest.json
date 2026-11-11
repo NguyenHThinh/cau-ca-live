@@ -1,0 +1,174 @@
+[
+ {
+  "level": 1,
+  "name": "Bé nón rơm, giỏ đan",
+  "clean": "clean/lv01-be-non-rom.png",
+  "size": [
+   165,
+   296
+  ]
+ },
+ {
+  "level": 2,
+  "name": "Cậu bé mũ bucket",
+  "clean": "clean/lv02-cau-be-mu-bucket.png",
+  "size": [
+   181,
+   344
+  ]
+ },
+ {
+  "level": 3,
+  "name": "Bé áo mưa vàng",
+  "clean": "clean/lv03-be-ao-mua-vang.png",
+  "size": [
+   153,
+   298
+  ]
+ },
+ {
+  "level": 4,
+  "name": "Cô bé mũ lưỡi trai, kính",
+  "clean": "clean/lv04-co-be-mu-kinh.png",
+  "size": [
+   177,
+   335
+  ]
+ },
+ {
+  "level": 5,
+  "name": "Cô bé tóc hồng, ghi lê",
+  "clean": "clean/lv05-co-be-toc-hong.png",
+  "size": [
+   153,
+   296
+  ],
+  "bling_png": "fx/lv05-co-be-toc-hong-bling.png",
+  "bling_apng": "fx/lv05-co-be-toc-hong-bling.apng",
+  "bling_webp": "fx/lv05-co-be-toc-hong-bling.webp",
+  "effect": {
+   "col": [
+    255,
+    255,
+    255
+   ],
+   "glow": 0,
+   "st": 2
+  }
+ },
+ {
+  "level": 6,
+  "name": "Rái cá áo phao",
+  "clean": "clean/lv06-rai-ca-ao-phao.png",
+  "size": [
+   204,
+   313
+  ],
+  "bling_png": "fx/lv06-rai-ca-ao-phao-bling.png",
+  "bling_apng": "fx/lv06-rai-ca-ao-phao-bling.apng",
+  "bling_webp": "fx/lv06-rai-ca-ao-phao-bling.webp",
+  "effect": {
+   "col": [
+    127,
+    224,
+    255
+   ],
+   "glow": 0.35,
+   "st": 4
+  }
+ },
+ {
+  "level": 7,
+  "name": "Gấu trúc đỏ",
+  "clean": "clean/lv07-gau-truc-do.png",
+  "size": [
+   218,
+   315
+  ],
+  "bling_png": "fx/lv07-gau-truc-do-bling.png",
+  "bling_apng": "fx/lv07-gau-truc-do-bling.apng",
+  "bling_webp": "fx/lv07-gau-truc-do-bling.webp",
+  "effect": {
+   "col": [
+    90,
+    168,
+    255
+   ],
+   "glow": 0.45,
+   "st": 6
+  }
+ },
+ {
+  "level": 8,
+  "name": "Mèo cam hoodie",
+  "clean": "clean/lv08-meo-cam-hoodie.png",
+  "size": [
+   131,
+   298
+  ],
+  "bling_png": "fx/lv08-meo-cam-hoodie-bling.png",
+  "bling_apng": "fx/lv08-meo-cam-hoodie-bling.apng",
+  "bling_webp": "fx/lv08-meo-cam-hoodie-bling.webp",
+  "effect": {
+   "col": [
+    176,
+    123,
+    255
+   ],
+   "glow": 0.55,
+   "st": 8,
+   "shim": 1
+  }
+ },
+ {
+  "level": 9,
+  "name": "Gấu Bắc Cực",
+  "clean": "clean/lv09-gau-bac-cuc.png",
+  "size": [
+   212,
+   352
+  ],
+  "bling_png": "fx/lv09-gau-bac-cuc-bling.png",
+  "bling_apng": "fx/lv09-gau-bac-cuc-bling.apng",
+  "bling_webp": "fx/lv09-gau-bac-cuc-bling.webp",
+  "effect": {
+   "col": [
+    255,
+    201,
+    60
+   ],
+   "glow": 0.7,
+   "st": 10,
+   "shim": 1,
+   "rays": 0.18
+  }
+ },
+ {
+  "level": 10,
+  "name": "Chim cánh cụt",
+  "clean": "clean/lv10-canh-cut.png",
+  "size": [
+   134,
+   305
+  ],
+  "bling_png": "fx/lv10-canh-cut-bling.png",
+  "bling_apng": "fx/lv10-canh-cut-bling.apng",
+  "bling_webp": "fx/lv10-canh-cut-bling.webp",
+  "effect": {
+   "col": [
+    255,
+    214,
+    90
+   ],
+   "col2": [
+    120,
+    255,
+    235
+   ],
+   "glow": 0.85,
+   "st": 14,
+   "shim": 1,
+   "rays": 0.3
+  }
+ }
+]
